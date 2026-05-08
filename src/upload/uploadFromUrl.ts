@@ -1,6 +1,7 @@
 import { PutObjectCommand, type S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { fileTypeFromBuffer } from "file-type";
+import { randomUUID } from "node:crypto";
 
 import type {
   DefaultKeyStrategyInput,
@@ -32,7 +33,7 @@ function parseContentLength(v: string | null): number | undefined {
 }
 
 function defaultKeyStrategy(input: DefaultKeyStrategyInput): string {
-  const base = input.idempotencyKey ?? crypto.randomUUID();
+  const base = input.idempotencyKey ?? randomUUID();
   const ext = input.ext ? input.ext.replace(/^\./, "") : undefined;
   const filename = ext ? `${base}.${ext}` : base;
   return `uploads/${filename}`;
