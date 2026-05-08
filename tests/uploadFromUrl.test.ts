@@ -281,7 +281,6 @@ describe("uploadFromUrl", () => {
   });
 
   it("uses idempotencyKey in default key strategy", async () => {
-    vi.spyOn(crypto, "randomUUID").mockReturnValue("00000000-0000-0000-0000-000000000000");
     const s3 = makeS3();
     const png = png1x1();
     globalThis.fetch = vi.fn(async () => {
@@ -299,7 +298,6 @@ describe("uploadFromUrl", () => {
     });
 
     expect(res.key).toBe("uploads/pred_abc.png");
-    vi.mocked(crypto.randomUUID).mockRestore();
   });
 
   it("includes publicUrl when publicBaseUrl is set", async () => {
