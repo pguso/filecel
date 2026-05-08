@@ -1,12 +1,16 @@
 {
   "name": "@filecel/r2",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Stream any remote URL directly into Cloudflare R2 (S3-compatible) with retries, metadata, and URL helpers.",
   "license": "MIT",
   "author": "",
   "repository": {
     "type": "git",
     "url": ""
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "keywords": [
     "cloudflare",
