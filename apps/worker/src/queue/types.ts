@@ -30,7 +30,7 @@ export function createRedisConnectionOptions(config: WorkerConfig): ConnectionOp
 }
 
 export function persistMediaJobId(data: PersistMediaJobData): string {
-  return `persist-media:${data.generationId}`;
+  return `persist-media-${data.generationId}`;
 }
 
 export function deriveFilename(sourceUrl: string, storageKey: string, filename?: string): string | undefined {

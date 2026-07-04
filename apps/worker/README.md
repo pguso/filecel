@@ -84,7 +84,7 @@ Response `202`:
 
 ```json
 {
-  "jobId": "persist-media:<generationId>",
+  "jobId": "persist-media-<generationId>",
   "status": "queued",
   "duplicate": false
 }

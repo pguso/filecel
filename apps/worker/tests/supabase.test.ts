@@ -49,7 +49,7 @@ describe("persistMediaJobId", () => {
         projectId: "project-1",
         sourceUrl: "https://replicate.delivery/example.png"
       })
-    ).toBe("persist-media:gen-1");
+    ).toBe("persist-media-gen-1");
   });
 });
 
