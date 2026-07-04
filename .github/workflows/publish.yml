@@ -26,10 +26,10 @@ jobs:
 
       - name: Verify tag matches package.json version
         run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
+          PKG_VERSION=$(node -p "require('./packages/r2/package.json').version")
           TAG_NAME="${GITHUB_REF_NAME#v}"
           if [ "$PKG_VERSION" != "$TAG_NAME" ]; then
-            echo "::error::package.json version is ${PKG_VERSION} but tag is ${GITHUB_REF_NAME} (expected v${PKG_VERSION})"
+            echo "::error::packages/r2 version is ${PKG_VERSION} but tag is ${GITHUB_REF_NAME} (expected v${PKG_VERSION})"
             exit 1
           fi
 
@@ -44,4 +44,4 @@ jobs:
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+        run: npm publish --access public -w @filecel/r2

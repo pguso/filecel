@@ -1,0 +1,23 @@
+[Unit]
+Description=Filecel persist-media worker
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=filecel
+Group=filecel
+WorkingDirectory=/opt/filecel
+EnvironmentFile=/etc/filecel/worker.env
+ExecStart=/usr/bin/node apps/worker/dist/index.js
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/filecel
+
+[Install]
+WantedBy=multi-user.target

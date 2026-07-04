@@ -29,3 +29,15 @@ export class UploadError extends R2Error {
 
 export class SigningError extends R2Error {}
 
+export class TransformError extends R2Error {
+  readonly transform?: import("./types.js").Transform;
+
+  constructor(
+    message: string,
+    options?: { cause?: unknown; transform?: import("./types.js").Transform }
+  ) {
+    super(message, { cause: options?.cause });
+    this.transform = options?.transform;
+  }
+}
+

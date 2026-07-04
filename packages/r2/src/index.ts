@@ -10,7 +10,12 @@ export type {
   CopyOptions,
   MoveOptions,
   HeadResult,
-  SignedUrlOptions
+  SignedUrlOptions,
+  ResizeTransform,
+  TranscodeTransform,
+  Transform,
+  TransformVariantResult,
+  VariantKeyStrategyInput
 } from "./types.js";
 
 export {
@@ -18,9 +23,13 @@ export {
   ValidationError,
   UploadError,
   SigningError,
+  TransformError,
   R2Error
 } from "./errors.js";
 
 export { createKey, type KeyInput, type KeyKind } from "./keys/createKey.js";
 export { signWorkerUrl, verifyWorkerSignature } from "./signedUrl/workerHmac.js";
+export { createVariantKey, defaultVariantKeyStrategy } from "./transform/variantKey.js";
+export { runTransformPipeline } from "./transform/pipeline.js";
+export type { RunTransformPipelineInput, TransformSource } from "./transform/pipeline.js";
 

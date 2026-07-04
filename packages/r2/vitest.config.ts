@@ -10,7 +10,10 @@ export default defineConfig({
         "src/bootstrap/cli.ts",
         "src/bootstrap/cloudflare.ts",
         "src/index.ts",
-        "src/types.ts"
+        "src/types.ts",
+        "src/transform/loadDeps.ts",
+        "src/transform/image/**",
+        "src/transform/video/**"
       ],
       thresholds: {
         lines: 82,

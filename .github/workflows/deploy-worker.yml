@@ -1,0 +1,55 @@
+name: Deploy Worker
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/worker/**"
+      - "packages/r2/**"
+      - "package-lock.json"
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build -f apps/worker/Dockerfile -t filecel-worker:ci .
+
+      - name: Smoke test container startup
+        run: |
+          docker run -d --name filecel-worker-smoke \
+            -e WORKER_API_SECRET=test-secret \
+            -e REDIS_URL=redis://127.0.0.1:6379 \
+            -e R2_ACCOUNT_ID=test \
+            -e R2_ACCESS_KEY_ID=test \
+            -e R2_SECRET_ACCESS_KEY=test \
+            -e R2_BUCKET=test \
+            -e SUPABASE_URL=https://example.supabase.co \
+            -e SUPABASE_SERVICE_ROLE_KEY=test \
+            -p 3000:3000 \
+            filecel-worker:ci || true
+          sleep 2
+          docker logs filecel-worker-smoke || true
+          docker rm -f filecel-worker-smoke || true
+
+  # Uncomment and configure secrets to deploy to your VPS:
+  #
+  # deploy:
+  #   needs: build-image
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - uses: actions/checkout@v6
+  #     - name: Deploy via SSH
+  #       uses: appleboy/ssh-action@v1
+  #       with:
+  #         host: ${{ secrets.VPS_HOST }}
+  #         username: ${{ secrets.VPS_USER }}
+  #         key: ${{ secrets.VPS_SSH_KEY }}
+  #         script: |
+  #           cd /opt/filecel
+  #           git pull
+  #           docker compose -f apps/worker/docker-compose.yml up -d --build

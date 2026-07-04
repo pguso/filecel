@@ -1,5 +1,43 @@
 export type Metadata = Record<string, string>;
 
+export type ResizeTransform = {
+  type: "resize";
+  width?: number;
+  height?: number;
+  fit?: "cover" | "contain" | "fill" | "inside" | "outside";
+  format?: "webp" | "jpeg" | "png" | "avif";
+  /** 1–100, default 80 */
+  quality?: number;
+};
+
+export type TranscodeTransform = {
+  type: "transcode";
+  width?: number;
+  height?: number;
+  videoCodec?: "h264" | "vp9";
+  audioCodec?: "aac" | "opus";
+  format?: "mp4" | "webm";
+  /** quality knob, default 23 */
+  crf?: number;
+};
+
+export type Transform = ResizeTransform | TranscodeTransform;
+
+export type TransformVariantResult = {
+  key: string;
+  transform: Transform;
+  etag?: string;
+  size?: number;
+  contentType?: string;
+  publicUrl?: string;
+};
+
+export type VariantKeyStrategyInput = {
+  originalKey: string;
+  transform: Transform;
+  index: number;
+};
+
 export type R2ClientConfig = {
   accountId: string;
   bucket: string;
@@ -47,6 +85,12 @@ export type UploadFromUrlOptions = {
   fetchTimeoutMs?: number;
   /** Overall timeout for the whole operation (ms). */
   overallTimeoutMs?: number;
+  /** Transforms to run after the original upload completes. */
+  transforms?: Transform[];
+  /** When a transform fails: throw (default) or skip and continue. */
+  transformErrorMode?: "fail" | "skip";
+  /** Custom key strategy for variant objects. */
+  variantKeyStrategy?: (input: VariantKeyStrategyInput) => string;
 };
 
 export type UploadFromUrlResult = {
@@ -55,6 +99,7 @@ export type UploadFromUrlResult = {
   size?: number;
   contentType?: string;
   publicUrl?: string;
+  variants?: TransformVariantResult[];
 };
 
 export type SignedUrlOptions = {

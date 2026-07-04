@@ -1,0 +1,31 @@
+{
+  "name": "@filecel/worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BullMQ worker: persist expiring media URLs to Cloudflare R2 and Supabase",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@filecel/r2": "*",
+    "@supabase/supabase-js": "^2.49.8",
+    "bullmq": "^5.56.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
