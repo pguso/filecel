@@ -2,7 +2,7 @@
   "name": "@filecel/worker",
   "version": "0.1.0",
   "private": true,
-  "description": "BullMQ worker: persist expiring media URLs to Cloudflare R2 and Supabase",
+  "description": "BullMQ worker: persist expiring media URLs to Cloudflare R2",
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@filecel/r2": "*",
-    "@supabase/supabase-js": "^2.49.8",
     "bullmq": "^5.56.0"
   },
   "devDependencies": {

@@ -16,14 +16,14 @@ Uses Redis (BullMQ) for job queuing
 
 
 
-Downloads media from a sourceUrl, uploads to Cloudflare R2, and writes to Supabase
+Downloads media from a sourceUrl, uploads to Cloudflare R2, and notifies Frameuniverse via webhook
 
 flowchart LR
   Postman -->|"GET /health"| Worker
   Postman -->|"POST /jobs/persist-media"| Worker
   Worker --> Redis
   Worker --> R2
-  Worker --> Supabase
+  Worker --> Frameuniverse
 
 Recommended path: Docker Compose on the VPS (matches the commented deploy job in [.github/workflows/deploy-worker.yml](.github/workflows/deploy-worker.yml)). For Postman testing, expose port 3000 directly first; add Caddy/nginx + TLS later.
 
@@ -107,21 +107,11 @@ Cloudflare R2 dashboard
 
 
 
-R2_PUBLIC_BASE_URL
+FRAMEUNIVERSE_API_URL, FILECEL_WEBHOOK_SECRET
 
 
 
-Your R2 public/custom domain (optional but needed for public URLs)
-
-
-
-
-
-SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-
-
-
-Supabase project settings (service role, server-only)
+Frameuniverse API base URL and webhook bearer secret
 
 REDIS_URL is overridden by docker-compose.yml to redis://redis:6379 — you do not need to change it for Compose.
 
@@ -141,88 +131,13 @@ If this fails, check: firewall (ufw status), container logs, and that .env has a
 
 
 
-Phase 2 — Supabase prerequisites (required for job testing)
+Phase 2 — Frameuniverse webhook (required for job completion)
 
-Postman can hit /health without Supabase, but POST /jobs/persist-media requires a real generations row that matches the request. The worker validates ownership in [generations.ts](apps/worker/src/supabase/generations.ts).
+The worker no longer writes to Supabase directly. On successful persist it POSTs to `{FRAMEUNIVERSE_API_URL}/webhooks/filecel` with the R2 key and metadata. On final failure it POSTs `{ generationId, error }`.
 
-2.1 Minimum schema
+Frameuniverse must implement the webhook handler to validate authorization, insert assets, presign URLs, and update generation status.
 
-Ensure these tables exist (names can be overridden via env):
-
-generations — columns used by the worker:
-
-
-
-
-
-id (uuid, PK)
-
-
-
-user_id (uuid)
-
-
-
-project_id (uuid)
-
-
-
-status (text/enum: PROCESSING, COMPLETED, FAILED)
-
-
-
-output_url (text, nullable)
-
-
-
-completed_at (timestamptz, nullable)
-
-
-
-error_message (text, nullable)
-
-assets — columns used by the worker:
-
-
-
-
-
-id (uuid, PK)
-
-
-
-generation_id (uuid, FK)
-
-
-
-project_id (uuid)
-
-
-
-type (IMAGE or VIDEO)
-
-
-
-storage_url (text)
-
-
-
-optional: filename, file_size_bytes, width, height, duration_seconds
-
-2.2 Seed a test generation row
-
-Before calling the API, insert a row in Supabase SQL editor:
-
-INSERT INTO generations (id, user_id, project_id, status, output_url)
-VALUES (
-  '11111111-1111-1111-1111-111111111111',
-  '22222222-2222-2222-2222-222222222222',
-  '33333333-3333-3333-3333-333333333333',
-  'PROCESSING',
-  'https://replicate.delivery/pbxt/...'
-);
-
-Use the same UUIDs in your Postman body. Pick a sourceUrl that is a real, publicly reachable image URL (e.g. a stable https:// test image).
+Use a real, publicly reachable image URL as `sourceUrl` when testing (e.g. a stable https:// test image).
 
 
 

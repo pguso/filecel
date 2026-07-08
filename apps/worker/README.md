@@ -1,26 +1,25 @@
 # @filecel/worker
 
-BullMQ service that persists expiring media URLs (e.g. Replicate delivery links) into Cloudflare R2 and records them in your Supabase `assets` table.
+BullMQ service that persists expiring media URLs (e.g. Replicate delivery links) into Cloudflare R2 and notifies Frameuniverse on completion.
 
 ## Architecture
 
-1. Your app creates a `generations` row with `output_url` set to the Replicate delivery URL
-2. App calls `POST /jobs/persist-media` on this worker (server-side only)
-3. BullMQ uploads the file to R2 via `@filecel/r2`
-4. Worker inserts an `assets` row and marks the generation `COMPLETED` (or `FAILED` after retries)
+1. Your app calls `POST /jobs/persist-media` on this worker (server-side only)
+2. BullMQ uploads the file to R2 via `@filecel/r2`
+3. On success, the worker POSTs to Frameuniverse's `/webhooks/filecel` endpoint with the R2 key and metadata
+4. On final failure after retries, the worker POSTs `{ generationId, error }` so Frameuniverse can mark the generation `FAILED`
 
-Generation lifecycle is tracked on the `generations` table — not on `assets`.
+Authorization, asset insertion, and URL presigning are handled by Frameuniverse — not this worker.
 
 ## Environment
-
-Copy `.env.example` to `.env` and fill in values. Table names and status enum values can be overridden if needed.
 
 Required variables:
 
 - `WORKER_API_SECRET` — Bearer token for the enqueue API
 - `REDIS_URL` — Redis connection string for BullMQ
-- `R2_*` — Cloudflare R2 credentials
-- `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
+- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` — Cloudflare R2 credentials
+- `FRAMEUNIVERSE_API_URL` — Base URL of the Frameuniverse API (e.g. `https://api.frameuniverse.com`)
+- `FILECEL_WEBHOOK_SECRET` — Bearer token sent to Frameuniverse webhooks
 
 ## Local development
 
@@ -32,9 +31,7 @@ npm run build
 # Start Redis (Docker)
 docker compose -f apps/worker/docker-compose.yml up redis -d
 
-# Configure env
-cp apps/worker/.env.example apps/worker/.env
-
+# Configure env (see required variables above)
 # Run worker (API + BullMQ processor)
 npm run dev -w @filecel/worker
 ```
@@ -70,15 +67,7 @@ Body:
 
 Required fields: `userId`, `generationId`, `projectId`, `sourceUrl`.
 
-`kind` controls the R2 key path (`images`, `videos`, or `files`; defaults to `files`). It maps to `assets.type`:
-
-| `kind` | `assets.type` |
-|---|---|
-| `images` | `IMAGE` |
-| `videos` | `VIDEO` |
-| `files` | `IMAGE` |
-
-R2 transform variants are not used in this flow.
+`kind` controls the R2 key path (`images`, `videos`, or `files`; defaults to `files`). The R2 key is deterministic: `users/{userId}/{kind}/{generationId}`.
 
 Response `202`:
 
@@ -90,9 +79,11 @@ Response `202`:
 }
 ```
 
+On completion, Frameuniverse receives a webhook with the R2 key (not a public URL).
+
 ### `POST /jobs/upload-binary`
 
-Synchronously uploads a base64-encoded reference image to R2. No BullMQ job and no Supabase writes — use this for ephemeral Replicate model inputs.
+Synchronously uploads a base64-encoded reference image to R2. No BullMQ job — use this for ephemeral Replicate model inputs.
 
 Headers:
 
@@ -125,7 +116,6 @@ Response `201`:
 
 ```json
 {
-  "storageUrl": "https://media.example.com/users/.../images/....jpg",
   "key": "users/.../images/....jpg"
 }
 ```
@@ -165,17 +155,8 @@ Or use `docker compose -f apps/worker/docker-compose.yml up -d`.
 
 1. Clone repo to `/opt/filecel`
 2. `npm ci && npm run build`
-3. Copy `apps/worker/.env.example` to `/etc/filecel/worker.env` and configure
+3. Configure `/etc/filecel/worker.env` with required variables
 4. Install `apps/worker/systemd/filecel-worker.service` to `/etc/systemd/system/`
 5. `systemctl enable --now filecel-worker`
 
 Put Caddy or nginx in front for TLS. Restrict inbound traffic to your Vercel egress IPs if possible.
-
-## Supabase schema
-
-The worker expects:
-
-- **`generations`** — lifecycle state (`status`, `output_url`, `completed_at`, `error_message`)
-- **`assets`** — persisted media (`generation_id`, `project_id`, `type`, `storage_url`, optional `filename`, `file_size_bytes`, etc.)
-
-The worker INSERTs asset rows after upload; it does not update pre-existing asset rows.

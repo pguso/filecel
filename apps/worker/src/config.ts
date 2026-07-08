@@ -1,9 +1,3 @@
-export type GenerationStatusValues = {
-  processing: string;
-  completed: string;
-  failed: string;
-};
-
 export type WorkerConfig = {
   port: number;
   apiSecret: string;
@@ -16,14 +10,10 @@ export type WorkerConfig = {
     accessKeyId: string;
     secretAccessKey: string;
     bucket: string;
-    publicBaseUrl?: string;
   };
-  supabase: {
-    url: string;
-    serviceRoleKey: string;
-    generationsTable: string;
-    assetsTable: string;
-    generationStatus: GenerationStatusValues;
+  frameuniverse: {
+    apiUrl: string;
+    webhookSecret: string;
   };
 };
 
@@ -33,11 +23,6 @@ function requireEnv(name: string): string {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
-}
-
-function optionalEnv(name: string): string | undefined {
-  const value = process.env[name];
-  return value && value.length > 0 ? value : undefined;
 }
 
 export function loadConfig(): WorkerConfig {
@@ -52,19 +37,11 @@ export function loadConfig(): WorkerConfig {
       accountId: requireEnv("R2_ACCOUNT_ID"),
       accessKeyId: requireEnv("R2_ACCESS_KEY_ID"),
       secretAccessKey: requireEnv("R2_SECRET_ACCESS_KEY"),
-      bucket: requireEnv("R2_BUCKET"),
-      publicBaseUrl: optionalEnv("R2_PUBLIC_BASE_URL")
+      bucket: requireEnv("R2_BUCKET")
     },
-    supabase: {
-      url: requireEnv("SUPABASE_URL"),
-      serviceRoleKey: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
-      generationsTable: process.env.SUPABASE_GENERATIONS_TABLE ?? "generations",
-      assetsTable: process.env.SUPABASE_ASSETS_TABLE ?? "assets",
-      generationStatus: {
-        processing: process.env.GENERATION_STATUS_PROCESSING ?? "PROCESSING",
-        completed: process.env.GENERATION_STATUS_COMPLETED ?? "COMPLETED",
-        failed: process.env.GENERATION_STATUS_FAILED ?? "FAILED"
-      }
+    frameuniverse: {
+      apiUrl: requireEnv("FRAMEUNIVERSE_API_URL"),
+      webhookSecret: requireEnv("FILECEL_WEBHOOK_SECRET")
     }
   };
 }

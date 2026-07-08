@@ -3,7 +3,6 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mockUploadBuffer = vi.fn();
-const mockGetPublicUrl = vi.fn();
 const mockCreateKey = vi.fn();
 
 vi.mock("@filecel/r2", async (importOriginal) => {
@@ -12,8 +11,7 @@ vi.mock("@filecel/r2", async (importOriginal) => {
     ...actual,
     createKey: (...args: unknown[]) => mockCreateKey(...args),
     createR2Client: vi.fn(() => ({
-      uploadBuffer: mockUploadBuffer,
-      getPublicUrl: mockGetPublicUrl
+      uploadBuffer: mockUploadBuffer
     }))
   };
 });
@@ -35,19 +33,11 @@ const config: WorkerConfig = {
     accountId: "acct",
     accessKeyId: "key",
     secretAccessKey: "secret",
-    bucket: "bucket",
-    publicBaseUrl: "https://media.example.com"
+    bucket: "bucket"
   },
-  supabase: {
-    url: "https://example.supabase.co",
-    serviceRoleKey: "service-key",
-    generationsTable: "generations",
-    assetsTable: "assets",
-    generationStatus: {
-      processing: "PROCESSING",
-      completed: "COMPLETED",
-      failed: "FAILED"
-    }
+  frameuniverse: {
+    apiUrl: "https://frameuniverse.example.com",
+    webhookSecret: "webhook-secret"
   }
 };
 
@@ -90,10 +80,8 @@ describe("handleUploadBinary", () => {
     vi.clearAllMocks();
     mockCreateKey.mockReturnValue("users/u1/images/abc.jpg");
     mockUploadBuffer.mockResolvedValue({
-      key: "users/u1/images/abc.jpg",
-      publicUrl: "https://media.example.com/users/u1/images/abc.jpg"
+      key: "users/u1/images/abc.jpg"
     });
-    mockGetPublicUrl.mockReturnValue("https://media.example.com/users/u1/images/abc.jpg");
   });
 
   it("returns 401 without bearer auth", async () => {
@@ -159,7 +147,7 @@ describe("handleUploadBinary", () => {
     expect(mockUploadBuffer).not.toHaveBeenCalled();
   });
 
-  it("returns 201 with storageUrl and key on success", async () => {
+  it("returns 201 with key only on success", async () => {
     const { res, getStatus, getBody } = captureResponse();
 
     await handleUploadBinary(
@@ -179,7 +167,6 @@ describe("handleUploadBinary", () => {
 
     expect(getStatus()).toBe(201);
     expect(getBody()).toEqual({
-      storageUrl: "https://media.example.com/users/u1/images/abc.jpg",
       key: "users/u1/images/abc.jpg"
     });
 

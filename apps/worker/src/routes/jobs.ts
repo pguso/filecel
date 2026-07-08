@@ -163,8 +163,7 @@ export async function handleUploadBinary(
     accountId: config.r2.accountId,
     accessKeyId: config.r2.accessKeyId,
     secretAccessKey: config.r2.secretAccessKey,
-    bucket: config.r2.bucket,
-    publicBaseUrl: config.r2.publicBaseUrl
+    bucket: config.r2.bucket
   });
 
   try {
@@ -176,8 +175,7 @@ export async function handleUploadBinary(
       metadata: { userId, source: "upload-binary" }
     });
 
-    const storageUrl = result.publicUrl ?? r2.getPublicUrl(result.key);
-    sendJson(res, 201, { storageUrl, key: result.key });
+    sendJson(res, 201, { key: result.key });
   } catch (error) {
     if (error instanceof ValidationError) {
       badRequest(res, error.message);

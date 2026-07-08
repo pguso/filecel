@@ -27,8 +27,8 @@ jobs:
             -e R2_ACCESS_KEY_ID=test \
             -e R2_SECRET_ACCESS_KEY=test \
             -e R2_BUCKET=test \
-            -e SUPABASE_URL=https://example.supabase.co \
-            -e SUPABASE_SERVICE_ROLE_KEY=test \
+            -e FRAMEUNIVERSE_API_URL=https://frameuniverse.example.com \
+            -e FILECEL_WEBHOOK_SECRET=test \
             -p 3000:3000 \
             filecel-worker:ci || true
           sleep 2
