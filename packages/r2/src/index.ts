@@ -2,6 +2,8 @@ export { createR2Client } from "./client/createR2Client.js";
 export type {
   R2Client,
   R2ClientConfig,
+  UploadBufferOptions,
+  UploadBufferResult,
   UploadFromUrlOptions,
   UploadFromUrlResult,
   ListOptions,

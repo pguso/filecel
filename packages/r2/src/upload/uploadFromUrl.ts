@@ -11,12 +11,7 @@ import type {
 } from "../types.js";
 import { FetchError, UploadError, ValidationError } from "../errors.js";
 import { withRetry } from "../retry/withRetry.js";
-import { getPublicUrl } from "../urls/getPublicUrl.js";
-import {
-  bufferTransformSource,
-  resolveTransformSourceFromR2,
-  runTransformPipeline
-} from "../transform/pipeline.js";
+import { finalizeUpload } from "./finalizeUpload.js";
 
 function stripCharset(contentType: string): string {
   return contentType.split(";")[0]?.trim() ?? contentType.trim();
@@ -169,51 +164,6 @@ function countBytesAndAbortStream(params: {
       void pump();
     }
   });
-}
-
-async function finalizeUpload(params: {
-  s3: import("@aws-sdk/client-s3").S3Client;
-  bucket: string;
-  key: string;
-  etag?: string;
-  size?: number;
-  contentType?: string;
-  publicBaseUrl?: string;
-  options: UploadFromUrlOptions;
-  sourceBuffer?: Uint8Array;
-}): Promise<UploadFromUrlResult> {
-  const { s3, bucket, key, etag, size, contentType, publicBaseUrl, options, sourceBuffer } = params;
-
-  const publicUrl = publicBaseUrl ? getPublicUrl({ publicBaseUrl, key }) : undefined;
-  const result: UploadFromUrlResult = { key, etag, size, contentType, publicUrl };
-
-  const transforms = options.transforms;
-  if (!transforms?.length) return result;
-
-  const source =
-    sourceBuffer !== undefined
-      ? bufferTransformSource(sourceBuffer)
-      : await resolveTransformSourceFromR2({
-          s3,
-          bucket,
-          key,
-          contentType,
-          maxBytes: options.maxBytes
-        });
-
-  const variants = await runTransformPipeline({
-    s3,
-    bucket,
-    originalKey: key,
-    contentType,
-    source,
-    transforms,
-    publicBaseUrl,
-    variantKeyStrategy: options.variantKeyStrategy,
-    transformErrorMode: options.transformErrorMode
-  });
-
-  return { ...result, variants };
 }
 
 export async function uploadFromUrl(params: {

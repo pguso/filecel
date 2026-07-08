@@ -14,12 +14,15 @@ import type {
   R2Client,
   R2ClientConfig,
   SignedUrlOptions,
+  UploadBufferOptions,
+  UploadBufferResult,
   UploadFromUrlOptions,
   UploadFromUrlResult
 } from "../types.js";
 import { createS3Client } from "./s3.js";
 import { signWorkerUrl } from "../signedUrl/workerHmac.js";
 import { SigningError } from "../errors.js";
+import { uploadBuffer } from "../upload/uploadBuffer.js";
 import { uploadFromUrl } from "../upload/uploadFromUrl.js";
 import { getPublicUrl } from "../urls/getPublicUrl.js";
 
@@ -42,6 +45,16 @@ export function createR2ClientFromS3(params: { config: R2ClientConfig; s3: S3Cli
         publicBaseUrl: config.publicBaseUrl,
         defaultKeyStrategy: config.defaultKeyStrategy,
         fetchFn: config.fetch
+      });
+    },
+
+    async uploadBuffer(buffer: Uint8Array, options?: UploadBufferOptions): Promise<UploadBufferResult> {
+      return uploadBuffer({
+        s3,
+        bucket,
+        buffer,
+        options,
+        publicBaseUrl: config.publicBaseUrl
       });
     },
 

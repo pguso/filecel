@@ -9,7 +9,7 @@ import {
   type PersistMediaQueue
 } from "./queue/persistMedia.js";
 import { handleHealth } from "./routes/health.js";
-import { handlePersistMediaJob } from "./routes/jobs.js";
+import { handlePersistMediaJob, handleUploadBinary } from "./routes/jobs.js";
 
 function createRequestHandler(config: WorkerConfig, queue: PersistMediaQueue) {
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
@@ -28,8 +28,21 @@ function createRequestHandler(config: WorkerConfig, queue: PersistMediaQueue) {
         return;
       }
 
-      if (pathname === "/health" || pathname === "/jobs/persist-media") {
-        methodNotAllowed(res, pathname === "/health" ? ["GET"] : ["POST"]);
+      if (pathname === "/jobs/upload-binary" && method === "POST") {
+        await handleUploadBinary(req, res, config);
+        return;
+      }
+
+      if (
+        pathname === "/health" ||
+        pathname === "/jobs/persist-media" ||
+        pathname === "/jobs/upload-binary"
+      ) {
+        const allowed =
+          pathname === "/health"
+            ? ["GET"]
+            : ["POST"];
+        methodNotAllowed(res, allowed);
         return;
       }
 

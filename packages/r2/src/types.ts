@@ -102,6 +102,20 @@ export type UploadFromUrlResult = {
   variants?: TransformVariantResult[];
 };
 
+export type UploadBufferOptions = {
+  key?: string;
+  /** Hint; sniffed bytes are used when missing. */
+  contentType?: string;
+  metadata?: Metadata;
+  allowedMimeTypes?: string[];
+  maxBytes?: number;
+  transforms?: Transform[];
+  transformErrorMode?: "fail" | "skip";
+  variantKeyStrategy?: (input: VariantKeyStrategyInput) => string;
+};
+
+export type UploadBufferResult = UploadFromUrlResult;
+
 export type SignedUrlOptions = {
   /** e.g. 3600 */
   expiresIn: number;
@@ -156,6 +170,7 @@ export type HeadResult = {
 
 export type R2Client = {
   uploadFromUrl(url: string, options?: UploadFromUrlOptions): Promise<UploadFromUrlResult>;
+  uploadBuffer(buffer: Uint8Array, options?: UploadBufferOptions): Promise<UploadBufferResult>;
   delete(key: string): Promise<void>;
   list(options?: ListOptions): Promise<ListResult>;
   copy(options: CopyOptions): Promise<void>;

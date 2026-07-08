@@ -90,6 +90,46 @@ Response `202`:
 }
 ```
 
+### `POST /jobs/upload-binary`
+
+Synchronously uploads a base64-encoded reference image to R2. No BullMQ job and no Supabase writes — use this for ephemeral Replicate model inputs.
+
+Headers:
+
+```
+Authorization: Bearer <WORKER_API_SECRET>
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "userId": "uuid",
+  "fileName": "image.jpg",
+  "mimeType": "image/jpeg",
+  "base64": "...",
+  "kind": "images"
+}
+```
+
+Required fields: `userId`, `fileName`, `mimeType`, `base64`.
+
+Validation:
+
+- `mimeType` must be `image/jpeg`, `image/png`, or `image/webp`
+- Decoded payload must be non-empty and at most 4 MiB
+- `kind` is optional (`images`, `videos`, or `files`; defaults to `images`)
+
+Response `201`:
+
+```json
+{
+  "storageUrl": "https://media.example.com/users/.../images/....jpg",
+  "key": "users/.../images/....jpg"
+}
+```
+
 ## Vercel integration example
 
 ```ts
